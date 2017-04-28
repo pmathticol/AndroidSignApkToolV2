@@ -1,0 +1,45 @@
+apply plugin: 'java'
+
+[compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
+
+Properties properties = new Properties()
+try {
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+} catch (Exception e) {
+    properties.load(project.rootProject.file('travis.properties').newDataInputStream())
+}
+version = properties.getProperty("bintray.version")
+group = properties.getProperty("bintray.groupId")
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.tencent.karaoke.signTool.signApkTool'
+        attributes 'Manifest-Version': version
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+// copy the jar to work directory
+task buildSignApkJar(type: Copy, dependsOn: [build, jar]) {
+    from('build/libs') {
+        include '*' + version + '*.jar'
+    }
+    //into('../tool_output')
+    into('D:\\trimktest\\apksigntool_read_delete')
+}
+
+defaultTasks 'buildSignApkJar'
